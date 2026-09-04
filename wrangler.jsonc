@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "aa-intelligence-explorer",
+  "compatibility_date": "2026-09-05",
+  // 纯静态部署：只上传 dist/，不配置 main，因此不存在 Worker 脚本，
+  // 也不受 Workers 的 CPU 时间限制（免费版 10ms 的坑完全绕开）。
+  "assets": {
+    "directory": "./dist",
+    // 未命中静态文件时回退到 index.html，供前端路由（#detail= 等深链）使用
+    "not_found_handling": "single-page-application"
+  }
+}

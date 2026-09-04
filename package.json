@@ -1,0 +1,31 @@
+{
+  "name": "aa-intelligence-explorer",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Artificial Analysis 智能指数跑分数据的可视化探索器：支持二维图表、三维场景、模型对比与数据导出",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "fetch:data": "node scripts/fetchData.mjs",
+    "typecheck": "tsc --noEmit",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "echarts": "^5.5.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.169.0",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/three": "^0.169.0",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "wrangler": "^4.129.0"
+  }
+}

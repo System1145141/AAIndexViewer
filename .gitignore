@@ -1,0 +1,21 @@
+node_modules/
+dist/
+.wrangler/
+
+# 数据快照由 GitHub Actions 在部署前现场抓取生成，不进仓库
+#（2~3MB / 次，若提交会迅速撑爆 Git 历史）
+public/data/
+
+# 抓取源站时落盘的调试产物
+.scrape/
+
+# 本地环境变量（含 Cloudflare 凭据时不入库）
+.env
+.env.*
+!.env.example
+
+*.log
+npm-debug.log*
+.DS_Store
+.idea/
+.vscode/

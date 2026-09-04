@@ -1,0 +1,64 @@
+name: 刷新数据并部署
+
+on:
+  schedule:
+    # 每 6 小时一次，刻意避开整点 —— GitHub 在高负载时会延迟定时任务，
+    # 负载极高时甚至会丢弃排队中的任务（见官方文档说明）
+    - cron: '23 */6 * * *'
+  push:
+    branches: [main]
+    # 防止下面「记录刷新时间」那一步的机器人提交反过来再次触发本工作流
+    paths-ignore:
+      - '.last-data-refresh'
+  workflow_dispatch:
+
+# 部署串行化，避免并发跑两次互相覆盖
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # 快照不入库，因此每次部署前都要现场抓取（约 5 秒）
+      - name: 抓取源站最新数据
+        run: npm run fetch:data
+
+      - name: 类型检查并构建
+        run: npm run build
+        env:
+          # 纯静态部署没有服务端接口，关掉前端对 /api/aa/refresh 的请求
+          VITE_ENABLE_REFRESH: 'false'
+
+      - name: 部署到 Cloudflare
+        run: npm run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # 公开仓库若 60 天无任何活动，GitHub 会自动停用定时任务。
+      # 这里提交一个只含时间戳的小文件来维持仓库活动 —— 比提交 2MB 快照划算得多。
+      - name: 记录刷新时间
+        if: github.event_name == 'schedule'
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase --autostash origin "$GITHUB_REF_NAME"
+          date -u +%Y-%m-%dT%H:%M:%SZ > .last-data-refresh
+          git add .last-data-refresh
+          git diff --quiet --cached && echo "时间戳无变化，跳过提交" || \
+            git commit -m "chore: 数据刷新 $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push origin "HEAD:$GITHUB_REF_NAME"
